@@ -1,6 +1,5 @@
 import { LocalAuth } from "whatsapp-web.js";
 import { KanoClient } from "./lib/client";
-import qrcode from "qrcode-terminal";
 
 const bot = new KanoClient({
   options: {
@@ -11,8 +10,4 @@ const bot = new KanoClient({
   },
 });
 
-bot.initialize();
-
-bot.on("qr", (qr) => {
-  qrcode.generate(qr, { small: true });
-});
+bot.build();
