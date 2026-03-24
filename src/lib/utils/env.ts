@@ -8,7 +8,7 @@ export const kanoEnv = createEnv({
         v.string(),
         v.nonEmpty("DATABASE_URL cannot be empty"),
         v.url("DATABASE_URL must be a valid URL"),
-        v.startsWith("postgres://", "DATABASE_URL must start with postgres://")
+        v.startsWith("postgresql://", "DATABASE_URL must start with postgresql://")
       ),
       OWNER_PHONE_NUMBER: v.pipe(
         v.string(),

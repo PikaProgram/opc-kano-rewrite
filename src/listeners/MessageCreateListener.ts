@@ -10,15 +10,25 @@ export default class MessageCreateListener extends Listener {
   }
 
   async execute(message: Message) {
+    if (!message.body.startsWith("!")) {
+      return;
+    }
+
     const [cmd, ...args] = message.body.substring(1).trim().split(/\s+/);
     const context = new CommandContext(this.client, message, args);
+
     try {
-      // If owner-only mode is enabled, only allow the owner and messages sent by the bot itself to be processed
-      if (!kanoEnv.OWNER_ONLY || (await context.getAuthor()).number === kanoEnv.OWNER_PHONE_NUMBER || message.fromMe) {
-        return;
+      // If OWNER_ONLY is false, anyone can use commands. If it's true, only the owner (or messages from the bot itself) can use commands.
+      if (kanoEnv.OWNER_ONLY) {
+        const author = await context.getAuthor();
+        if (author.number !== kanoEnv.OWNER_PHONE_NUMBER && !message.fromMe) {
+          console.log("rejected", cmd);
+          return;
+        }
       }
 
       const command = this.client.commandHandler.getCommand(cmd!.toLowerCase());
+      
       if (command) {
         try {
           await command.execute(context);

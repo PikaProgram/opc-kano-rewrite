@@ -79,7 +79,7 @@ export class CommandHandler {
         this.register(command);
         console.log(`Loaded command: ${command.meta.name}`);
       } else if (stat.isDirectory()) {
-        await this.load(path.resolve(commandFolderPath, file));
+        await this.load(path.resolve(basePath, commandFolderPath, file));
       } else {
         console.warn(`Skipping file: ${file}`);
       }
