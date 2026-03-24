@@ -1,13 +1,20 @@
-import { LocalAuth } from "whatsapp-web.js";
+import { LocalAuth, RemoteAuth } from "whatsapp-web.js";
 import { KanoClient } from "./lib/client";
+import { kanoEnv } from "./lib/utils/env";
+import { createRemoteAuth } from "./db/store";
 
-const bot = new KanoClient({
-  options: {
-    puppeteer: {
-      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+try {
+  const bot = new KanoClient({
+    options: {
+      puppeteer: {
+        args: ["--no-sandbox", "--disable-setuid-sandbox"],
+      },
+      authStrategy: (kanoEnv.NODE_ENV === "production" ? createRemoteAuth() : new LocalAuth()),
     },
-    authStrategy: new LocalAuth() // TODO: change depending on node env
-  },
-});
+  });
 
-bot.build();
+  await bot.build();
+} catch (error) {
+  console.error("Failed to initialize WhatsApp client:", error);
+  process.exit(1);
+}

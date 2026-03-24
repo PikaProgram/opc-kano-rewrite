@@ -1,14 +1,14 @@
 import fs from "fs/promises";
 import path from "path";
-import type { Message, GroupChat, PrivateChat } from "whatsapp-web.js";
+import type { Message } from "whatsapp-web.js";
 import type { KanoClient } from "../client";
 
 export abstract class Command implements CommandComponent {
   public constructor(
     public client: KanoClient,
   ) { }
-  
-  public abstract meta: CommandComponent["meta"]
+
+  public abstract meta: CommandComponent["meta"];
   public abstract execute(context: CommandContext): Promise<void> | void;
 }
 
@@ -42,7 +42,7 @@ export interface CommandComponent {
 export class CommandContext {
   public client: KanoClient;
   public message: Message;
-  
+
   constructor(
     client: KanoClient,
     message: Message,
@@ -51,13 +51,19 @@ export class CommandContext {
     this.client = client;
     this.message = message;
   }
+
+  public async getAuthor() {
+    return await this.client.getContactById(String(this.message.author || this.message.from).replace(/:\d+@lid$/, '@lid')); // janky ahh library
+  }
 }
 
 export class CommandHandler {
   private commands: Map<string, Command>;
   private aliases: Map<string, string>;
+  private client: KanoClient;
 
-  constructor() {
+  constructor(client: KanoClient) {
+    this.client = client;
     this.commands = new Map();
     this.aliases = new Map();
   }
@@ -69,7 +75,7 @@ export class CommandHandler {
       const stat = await fs.stat(path.resolve(basePath, commandFolderPath, file));
       if (stat.isFile() && file.endsWith(".ts")) {
         const commandModule = await import(path.resolve(basePath, commandFolderPath, file));
-        const command: Command = new commandModule.default();
+        const command: Command = new commandModule.default(this.client);
         this.register(command);
         console.log(`Loaded command: ${command.meta.name}`);
       } else if (stat.isDirectory()) {
@@ -87,8 +93,12 @@ export class CommandHandler {
     }
   }
 
-  get(name: string): Command | undefined {
+  getCommand(name: string): Command | undefined {
     const commandName = this.aliases.get(name) || name;
     return this.commands.get(commandName);
+  }
+
+  getAllCommands(): Command[] {
+    return Array.from(this.commands.values());
   }
 }

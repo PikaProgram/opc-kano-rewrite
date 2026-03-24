@@ -1,6 +1,7 @@
 import type { KanoClient } from "@/lib/client";
 import { CommandContext } from "@/lib/handlers/commands";
 import { Listener } from "@/lib/handlers/listener";
+import { kanoEnv } from "@/lib/utils/env";
 import type { Message } from "whatsapp-web.js";
 
 export default class MessageCreateListener extends Listener {
@@ -9,21 +10,25 @@ export default class MessageCreateListener extends Listener {
   }
 
   async execute(message: Message) {
-    // if (message.fromMe) return; // Ignore messages sent by the bot itself
+    const [cmd, ...args] = message.body.substring(1).trim().split(/\s+/);
+    const context = new CommandContext(this.client, message, args);
+    try {
+      // If owner-only mode is enabled, only allow the owner and messages sent by the bot itself to be processed
+      if (!kanoEnv.OWNER_ONLY || (await context.getAuthor()).number === kanoEnv.OWNER_PHONE_NUMBER || message.fromMe) {
+        return;
+      }
 
-    if (message.body.startsWith("!")) {
-      const [cmd, ...args]: string[] = message.body.substring(1).trim().split(/\s+/);
-      const command = this.client.commandHandler.get(cmd!.toLowerCase());
-
+      const command = this.client.commandHandler.getCommand(cmd!.toLowerCase());
       if (command) {
         try {
-          const ctx = new CommandContext(this.client, message, args);
-          await command.execute(ctx);
+          await command.execute(context);
         } catch (error) {
-          console.error(`Error executing command ${command.meta.name}:`, error);
-          await message.reply("An error occurred while executing that command.");
+          console.error("Error executing command:", error);
         }
       }
+    }
+    catch (error) {
+      console.error("Error in message_create listener:", error);
     }
   }
 }

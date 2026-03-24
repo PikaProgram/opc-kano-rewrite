@@ -8,13 +8,13 @@ export class KanoClient extends Client {
 
   constructor({ options }: { options: ClientOptions; }) {
     super(options);
-    this.commandHandler = new CommandHandler();
-    this.listenerHandler = new ListenerHandler();
+    this.commandHandler = new CommandHandler(this);
+    this.listenerHandler = new ListenerHandler(this);
   }
 
   public async build() {
     await this.commandHandler.load("commands");
-    await this.listenerHandler.load("listeners", this);
+    await this.listenerHandler.load("listeners");
 
     this.initialize();
   }

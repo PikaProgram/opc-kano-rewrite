@@ -13,20 +13,22 @@ export abstract class Listener {
 }
 
 export class ListenerHandler {
-  constructor() {  }
+  constructor(
+    public client: KanoClient,
+  ) {  }
 
-  async load(listenerFolderPath: string, client: KanoClient) {
+  async load(listenerFolderPath: string) {
     const basePath = process.cwd();
     const listenerFiles = await fs.readdir(path.resolve(basePath, "src", listenerFolderPath));
     for (const file of listenerFiles) {
       const stat = await fs.stat(path.resolve(basePath, "src", listenerFolderPath, file));
       if (stat.isFile() && file.endsWith(".ts")) {
         const listenerModule = await import(path.resolve(basePath, "src", listenerFolderPath, file));
-        const listener: Listener = new listenerModule.default(client);
-        client.on(listener.name, (...args) => listener.execute(...args));
+        const listener: Listener = new listenerModule.default(this.client);
+        this.client.on(listener.name, (...args) => listener.execute(...args));
         console.log(`Loaded listener: ${listener.name}`);
       } else if (stat.isDirectory()) {
-        await this.load(path.resolve(listenerFolderPath, file), client);
+        await this.load(path.resolve(listenerFolderPath, file));
       } else {
         console.warn(`Skipping file: ${file}`);
       }

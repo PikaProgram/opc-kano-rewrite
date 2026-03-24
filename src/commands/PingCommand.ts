@@ -1,5 +1,4 @@
 import { ChannelTypes, Command, type CommandContext } from "@/lib/handlers/commands";
-import type { Message } from "whatsapp-web.js";
 
 export default class PingCommand extends Command {
   public meta = {
@@ -19,8 +18,10 @@ export default class PingCommand extends Command {
 
   async execute(context: CommandContext) {
     const start = Date.now();
-    await context.message.reply("Pong!");
+    const sentMessage = await context.message.reply("Pinging...");
     const latency = Date.now() - start;
-    await context.message.reply(`Latency: ${latency}ms`);
+    setTimeout(async () => {
+      await sentMessage.edit(`Pong! Latency: ${latency}ms`);
+    }, 5000);
   }
 }
