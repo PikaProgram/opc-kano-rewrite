@@ -38,12 +38,12 @@ export default class HelpCommand extends Command {
         helpMessage += "\n";
       }
 
-      await context.message.reply(helpMessage);
+      await context.client.socket.sendMessage(context.message.key.remoteJid!, { text: helpMessage });
     } else {
       const commandName = args[0]!.toLowerCase();
       const command = this.client.commandHandler.getCommand(commandName);
       if (!command || command.meta.disabled || command.meta.developerOnly) {
-        await context.message.reply("Command not found.");
+        await context.client.socket.sendMessage(context.message.key.remoteJid!, { text: "Command not found." });
         return;
       }
 
@@ -62,7 +62,7 @@ export default class HelpCommand extends Command {
       if (meta.developerOnly) {
         helpMessage += `*Developer Only:* Yes\n`;
       }
-      await context.message.reply(helpMessage);
+      await context.client.socket.sendMessage(context.message.key.remoteJid!, { text: helpMessage });
     }
   }
 }

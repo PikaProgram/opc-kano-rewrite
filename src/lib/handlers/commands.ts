@@ -1,7 +1,7 @@
 import fs from "fs/promises";
 import path from "path";
-import type { Message } from "whatsapp-web.js";
 import type { KanoClient } from "../client";
+import type { WAMessage } from "baileys";
 
 export abstract class Command implements CommandComponent {
   public constructor(
@@ -41,19 +41,15 @@ export interface CommandComponent {
 
 export class CommandContext {
   public client: KanoClient;
-  public message: Message;
+  public message: WAMessage;
 
   constructor(
     client: KanoClient,
-    message: Message,
+    message: WAMessage,
     public args: string[],
   ) {
     this.client = client;
     this.message = message;
-  }
-
-  public async getAuthor() {
-    return await this.client.getContactById(String(this.message.author || this.message.from).replace(/:\d+@lid$/, '@lid')); // janky ahh library
   }
 }
 
