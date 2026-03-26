@@ -22,45 +22,38 @@ export async function createAuth(env: typeof kanoEnv): Promise<{ state: Authenti
 }
 
 export class KanoStore extends Keyv {
-  async getMessage(key: keyof typeof KanoStoreKey, messageID: string): Promise<WAMessage | undefined> {
-    const msgStore = await this.store.get(key) as Keyv<WAMessage> | undefined;
-    if (!msgStore) {
-      return undefined;
-    }
-    return await msgStore.get(messageID);
+  private generateKey(key: keyof typeof KanoStoreMessageKey, id: string): string {
+    return `${KanoStoreMessageKey[key]}_${id}`;
   }
 
-  async setMessage(key: keyof typeof KanoStoreKey, messageID: string, message: WAMessage): Promise<void> {
-    let msgStore = await this.store.get(key) as Keyv<WAMessage> | undefined;
-    if (!msgStore) {
-      msgStore = new Keyv();
-    }
-    await msgStore.set(messageID, message);
-    await this.store.set(key, msgStore);
+  async getMessage(key: keyof typeof KanoStoreMessageKey, messageID: string): Promise<WAMessage | undefined> {
+    const data = await this.get(this.generateKey(key, messageID));
+    return data ? JSON.parse(data) as WAMessage : undefined;
   }
 
-  async deleteMessage(key: keyof typeof KanoStoreKey, messageID: string): Promise<void> {
-    const msgStore = await this.store.get(key) as Keyv<WAMessage> | undefined;
-    if (!msgStore) {
-      return;
-    }
-    await msgStore.delete(messageID);
+  async setMessage(key: keyof typeof KanoStoreMessageKey, messageID: string, message: WAMessage): Promise<void> {
+    this.set(this.generateKey(key, messageID), JSON.stringify(message));
   }
 
-  async setVOData(messageID: string, data: { mediaType: "image" | "video" | "audio"; url: string; mediaKey: Uint8Array<ArrayBufferLike>; }): Promise<void> {
-    await this.set("VO_MESSAGE" + messageID, data);
+  async deleteMessage(key: keyof typeof KanoStoreMessageKey, messageID: string): Promise<void> {
+    await this.delete(this.generateKey(key, messageID));
   }
 
-  async getVOData(messageID: string): Promise<{ mediaType: "image" | "video" | "audio"; url: string; mediaKey: Uint8Array<ArrayBufferLike>; } | undefined> {
-    return await this.get("VO_MESSAGE" + messageID);
+  async getVOData(messageID: string): Promise<any> {
+    const data = await this.get("VO_DATA" + messageID);
+    return data ? JSON.parse(data) : undefined;
+  }
+
+  async setVOData(messageID: string, data: any): Promise<void> {
+    this.set("VO_DATA" + messageID, JSON.stringify(data));
   }
 
   async deleteVOData(messageID: string): Promise<void> {
-    await this.delete("VO_MESSAGE" + messageID);
+    await this.delete("VO_DATA" + messageID);
   }
 }
 
-export enum KanoStoreKey {
+export enum KanoStoreMessageKey {
   APPROVAL_MESSAGE,
   VO_MESSAGE
 }

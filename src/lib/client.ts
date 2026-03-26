@@ -17,9 +17,9 @@ export class KanoClient {
     this.config = config;
     this.store = store || new KanoStore();
     this.socket = makeWASocket(this.config);
+    this.event = new KanoEventEmitter<KanoEventMap>();
     this.commandHandler = new CommandHandler(this);
     this.listenerHandler = new ListenerHandler(this);
-    this.event = new KanoEventEmitter<KanoEventMap>();
   }
 
   public async build() {
@@ -29,7 +29,7 @@ export class KanoClient {
 
   public async reconnect(err: Error) {
     this.socket.end(err);
-    // Recreate the socket connection
     this.socket = makeWASocket(this.config);
+    await this.build();
   }
 }
