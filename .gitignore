@@ -139,4 +139,4 @@ vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
 # baileys auth data
-.baileys_auth/
+.kano_auth/

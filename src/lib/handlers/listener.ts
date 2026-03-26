@@ -2,14 +2,15 @@ import type { BaileysEventMap } from "baileys";
 import type { KanoClient } from "../client";
 import fs from "fs/promises";
 import path from "path";
+import { type KanoEventMap, KanoEvents } from "./events";
 
-abstract class Listener<K extends keyof BaileysEventMap> {
+abstract class Listener<K extends keyof (BaileysEventMap & KanoEventMap)> {
   constructor(
     public client: KanoClient,
     public readonly name: K
   ) { }
 
-  public abstract execute: (args: BaileysEventMap[K], client: KanoClient) => Promise<void> | void;
+  public abstract execute: (args: (BaileysEventMap & KanoEventMap)[K], client: KanoClient) => Promise<void> | void;
 }
 
 export class ListenerHandler {
@@ -30,7 +31,11 @@ export class ListenerHandler {
         }
         const ListenerClass: ReturnType<typeof CreateListener> = listenerModule.default;
         const listenerInstance = new ListenerClass(this.client);
-        this.client.socket.ev.on(listenerInstance.name, (args) => listenerInstance.execute(args, this.client));
+        if (KanoEvents.includes(listenerInstance.name as keyof KanoEventMap)) {
+          this.client.event.on(listenerInstance.name as keyof KanoEventMap, (args) => listenerInstance.execute(args, this.client));
+        } else{
+          this.client.socket.ev.on(listenerInstance.name as keyof BaileysEventMap, (args) => listenerInstance.execute(args, this.client));
+        }
         console.log(`Loaded listener: ${listenerInstance.name} from ${file}`);
       } else if (stat.isDirectory()) {
         await this.load(path.resolve(basePath, listenerFolderPath, file));
@@ -41,10 +46,10 @@ export class ListenerHandler {
   }
 }
 
-export function CreateListener<K extends keyof BaileysEventMap>(
+export function CreateListener<K extends keyof (BaileysEventMap & KanoEventMap)>(
   name: K,
   execute:
-    (args: BaileysEventMap[K], client: KanoClient) => Promise<void> | void) {
+    (args: (BaileysEventMap & KanoEventMap)[K], client: KanoClient) => Promise<void> | void) {
   return class extends Listener<K> {
     constructor(
       client: KanoClient
@@ -54,4 +59,3 @@ export function CreateListener<K extends keyof BaileysEventMap>(
     public override execute = execute;
   };
 }
-

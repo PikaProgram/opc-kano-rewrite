@@ -4,8 +4,10 @@ import { kanoEnv } from "@/lib/utils/env";
 
 export default CreateListener("messages.upsert", async function (args, client: KanoClient) {
   const { messages, type } = args;
-  if (type === "notify") {
-    for (const message of messages) {
+  if (!messages || messages.length === 0) return;
+
+  for (const message of messages) {
+    if (type === "notify") {
       // If owner-only mode is enabled, ignore messages that are not from the owner or sent by the bot itself
       if (
         kanoEnv.OWNER_ONLY &&
@@ -14,8 +16,11 @@ export default CreateListener("messages.upsert", async function (args, client: K
         continue;
       }
 
-      if (message.message?.conversation?.startsWith("!")) {
-        const [cmdName, ...args] = message.message.conversation.slice(1).trim().split(/\s+/);
+      const content = message.message?.conversation || message.message?.extendedTextMessage?.text;
+      if (!content) continue;
+
+      if (content.startsWith("!")) {
+        const [cmdName, ...args] = content.slice(1).trim().split(/\s+/);
         const command = client.commandHandler.getCommand(cmdName!.toLowerCase());
         if (command) {
           try {

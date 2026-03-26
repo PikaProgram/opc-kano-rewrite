@@ -18,7 +18,7 @@ export default class PingCommand extends Command {
 
   async execute(context: CommandContext) {
     const start = Date.now();
-    const sentMessage = await context.client.socket.sendMessage(context.message.key.remoteJid!, { text: "Pinging..." });
+    const sentMessage = await context.client.socket.sendMessage(context.message.key.remoteJid!, { text: "Pinging..." }, { quoted: context.message });
     const latency = Date.now() - start;
     setTimeout(async () => {
       await context.client.socket.sendMessage(context.message.key.remoteJid!, { edit: sentMessage!.key, text: `Pong! Latency: ${latency}ms` });
